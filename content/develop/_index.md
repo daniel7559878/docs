@@ -1,4 +1,163 @@
----
+---Escopo do app de loterias da Caixa com todas as modalidades
+Antes de tudo: não existe forma confiável de garantir 80%–90% de acerto em loterias. Elas são projetadas para serem imprevisíveis. Posso incluir análises estatísticas avançadas, filtros e geradores, mas qualquer “probabilidade” exibida deve ser interpretada como heurística, não garantia.
+
+Modalidades e interfaces próprias
+Mega-Sena
+Recursos: Estatística de atrasos, frequência por dezena, distribuição por dezenas/quadrantes, pares/ímpares, primos/múltiplos.
+Filtros: Intervalos, repetição do último concurso, exclusão de atrasos extremos, equilíbrio pares/ímpares, soma alvo.
+Gerador: Aleatório, ponderado por frequência, condicionado a filtros.
+Ações: Simular N concursos, salvar combinações, comparar com resultados, alertas.
+Quina
+Recursos: Calor por posição, repetição entre concursos próximos, análise de somas e gaps.
+Filtros: Faixa de soma, número de repetidos, distância média entre dezenas.
+Gerador: Baseado em distribuição histórica, reforço de baixa correlação.
+Lotofácil
+Recursos: Padrões de 7–9 ímpares, 5–8 números em linhas/colunas, blocos 1–8–8.
+Filtros: Matrizes predefinidas, fechamento combinatório, exclusão de repetições altas.
+Gerador: Fechamentos com cobertura L minima (ex.: garantir 11 pontos em acertos parciais).
+Lotomania
+Recursos: Equilíbrio 0–9, 10–19, 20–29…; pares/ímpares; repetição.
+Filtros: Distribuição por dezenas, exclusão de clusters, soma alvo.
+Gerador: Pool estratificado para 50 números.
+Timemania
+Recursos: Frequência de times, atraso e repetição do “time do coração”.
+Filtros: Times favoritos, exclusão de times frequentes.
+Gerador: Ponderado por histórico e diversidade.
+Dupla Sena
+Recursos: Interdependência entre os dois sorteios, repetição cruzada.
+Filtros: Soma e padrão por sorteio, pares/ímpares.
+Gerador: Dois conjuntos com baixa correlação entre si.
+Dia de Sorte
+Recursos: Frequência por mês e por dezenas.
+Filtros: Mês com peso, exclusão de meses mais recorrentes.
+Gerador: Ponderado por mês seleto e diversidade.
+Super Sete
+Recursos: Distribuição por colunas (0–9), calor posicional.
+Filtros: Limites por coluna, soma de dígitos.
+Gerador: Coluna a coluna com restrições.
+
+Funcionalidades transversais
+Painel de estatísticas:
+
+
+Frequência: Top/bottom N dezenas por modalidade.
+Atraso: Concursos sem aparecer por dezena.
+Correlação: Repetição entre concursos.
+Somas e padrões: Faixas típicas, pares/ímpares, primos, múltiplos.
+Geradores de jogos:
+
+
+Modos: Aleatório puro, ponderado, por fechamento, por matriz/padrão.
+Restrições: Soma, pares/ímpares, intervalo, não repetir X do último, evitar clusters.
+Lotes: Geração em massa com seed e reprodutibilidade.
+Filtros avançados:
+
+
+Exclusões/inclusões: Listas fixas, faixa por dezena.
+Padrões: Linhas/colunas (Lotofácil), blocos, distribuição por quadrantes (Mega-Sena).
+Validador: Score por regra, destacando conflitos.
+Simulações e métricas:
+
+
+Monte Carlo: Estimar desempenho de conjuntos sob sorteios sintéticos.
+Backtesting: Avaliar contra histórico real.
+Scores: Diversidade, cobertura, risco de repetição, entropia.
+Gestão de jogos:
+
+
+Salvar: Coleções, tags, notas.
+Comparar: Checagem automática pós-concurso.
+Exportar/Importar: CSV/JSON, compartilhar.
+Alertas e rotina:
+
+
+Atualização automática: Novos resultados.
+Notificações: Concurso aberto, fechamento, hits detectados.
+
+Arquitetura técnica
+Camadas
+App: Windows/Android/iOS com UI nativa por modalidade.
+Core: Módulo de regras e geração, estatística, simulação.
+Dados: Repositório histórico, cache local, sincronização.
+Serviços: Atualização de resultados, verificação de integridade.
+Modelos de dados
+Concurso: id, modalidade, data, dezenas, extra (mês/time).
+Estatística: frequência, atraso, soma, padrões.
+Jogo: id, modalidade, dezenas, origem (gerador/filtros), score.
+Regra: tipo, parâmetros, peso, prioridade.
+Simulação: seed, iterações, métricas.
+
+Fluxos de uso
+Escolha da modalidade: Seleção abre UI dedicada com estatísticas e gerador.
+Aplicar filtros: Interface de regras com pré-visualização e score.
+Gerar jogos: Em lote, com seed e limite por score mínimo.
+Validar e salvar: Checagem de conflitos, salvamento com tags.
+Simular: Monte Carlo e backtesting para estimar robustez.
+Comparar resultados: Após atualização, marcar acertos e gerar relatório.
+
+Design da interface
+Topo por modalidade: Cartões com frequência, atraso, soma.
+Aba Filtros: Controles deslizantes, checkboxes, chips de padrões.
+Aba Gerador: Botões “Gerar”, “Gerar 10/50”, “Gerar com seed”.
+Lista de jogos: Cards com dezenas, score, tags, ações “Salvar”, “Exportar”.
+Aba Simulação: Gráficos simples (histograma de acertos, heatmaps).
+Comparador: Painel de acertos por concurso, badges de acerto.
+
+Comandos e pseudocódigo funcional
+DSL de regras (exemplo)
+modalidade: "mega-sena"
+incluir: [5, 17]
+excluir: [32, 33]
+pares_impares: {pares: 3..4}
+soma: 150..210
+atraso_max: 18
+frequencia_min: 0.8
+quadrantes: {Q1: 1..2, Q2: 1..2, Q3: 1..2, Q4: 1..2}
+seed: 982374
+gerar: {quantidade: 20, modo: "ponderado"}
+score_min: 0.65
+
+Geração ponderada
+freq = normalizar(frequencias_historicas)
+peso = alpha*freq + beta*inverso_atraso + gamma*diversidade
+candidatos = amostrar(peso, tamanho_modalidade)
+if validar_regras(candidatos): aceitar
+repetir até atingir quantidade
+
+Validador de regras
+func validar_regras(jogo, regras):
+  return (
+    soma(jogo) ∈ regras.soma
+    && count_pares(jogo) ∈ regras.pares_impares
+    && !intersec(jogo, regras.excluir)
+    && inclui_todos(jogo, regras.incluir)
+    && atraso_dezenas(jogo) ≤ regras.atraso_max
+    && score(jogo) ≥ regras.score_min
+    && respeita_quadrantes(jogo, regras.quadrantes)
+  )
+
+Simulação Monte Carlo
+for i in 1..N:
+  sorteio = sorteio_aleatorio(modalidade)
+  hits = acertos(jogo, sorteio)
+  coletar(hits)
+metr = {media: μ(hits), p_topo: P(hits ≥ k), intervalo_confiança: IC95%}
+
+
+Métricas e scores
+Score de diversidade: Penaliza repetições e clusters.
+Score de cobertura: Probabilidade de cobrir faixas e padrões.
+Entropia do conjunto: Variedade de combinações.
+Risco de repetição: Semelhança com últimos M concursos.
+
+Observações importantes
+Transparência: Exibir claramente que probabilidades são estimativas heurísticas.
+Reprodutibilidade: Seeds fixos para comparar geradores.
+Performance: Geração em massa deve usar paralelismo e cache de estatísticas.
+Confiabilidade: Logs e auditoria das regras aplicadas por jogo.
+Se quiser, descrevo cada tela com wireframes textuais e entrego um JSON de configuração completo para todas as modalidades, pronto para implementar.
+
+
 title: Develop with Redis
 description: Learn how to develop with Redis
 linkTitle: Develop
